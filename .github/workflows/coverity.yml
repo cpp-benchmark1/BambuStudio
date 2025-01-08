@@ -1,0 +1,81 @@
+name: Coverity Scan
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  coverity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download and Install Coverity Tool
+        run: |
+          wget https://scan.coverity.com/download/linux64 \
+            --post-data "token=${{ secrets.COVERITY_TOKEN }}&project=${{ github.repository }}" \
+            -O coverity_tool.tgz
+          mkdir coverity_tool
+          tar -xvzf coverity_tool.tgz -C coverity_tool --strip-components=1
+          export PATH=$PWD/coverity_tool/bin:$PATH
+          echo "Coverity Tool installed successfully"
+
+      - name: Build with Coverity
+        run: |
+          cd "$GITHUB_WORKSPACE/deps"
+          for dir in build deps; do
+            test -d $dir || mkdir $dir
+          done
+          cd build
+          if [ ! -f $GITHUB_WORKSPACE/.deps_done ]; then
+            cmake ../ -DDESTDIR="$GITHUB_WORKSPACE/dep_linux" -DCMAKE_BUILD_TYPE=Release -DDEP_WX_GTK3=1
+            { test "$(nproc)" -gt 1 && make -j"$(nproc)" ;} || make
+          fi
+          touch $GITHUB_WORKSPACE/.deps_done
+
+          # bins
+          cd "$GITHUB_WORKSPACE"
+          for dir in build install_dir; do
+            test -d $dir || mkdir $dir
+          done
+          cd build
+          cmake .. -DSLIC3R_FHS=1 -DSLIC3R_STATIC=ON -DSLIC3R_GTK=3 -DBBL_RELEASE_TO_PUBLIC=1 -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/dep_linux/usr/local" -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install_dir" -DCMAKE_BUILD_TYPE=Release
+          { test "$(nproc)" -gt 1 && cmake --build . --target install --config Release -j"$(nproc)" ;} || cmake --build . --target install --config Release
+
+      - name: Compress with bzip2
+        run: |
+          tar cjvf myproject.tar.bz2 cov-int
+        id: compress
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "coverity-scan-${{ github.run_id }}"
+          release_name: "Coverity Scan Results"
+          body: "Automated Coverity Scan Results"
+          draft: false
+          prerelease: false
+
+      - name: Upload Asset to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: myproject.tar.bz2
+          asset_name: myproject.tar.bz2
+          asset_content_type: application/x-bzip2
+
+      - name: Notify Coverity Scan
+        run: |
+          curl --data "project=${{ github.repository }}&token=${{ secrets.COVERITY_TOKEN }}&email=cpp.benchmark@proton.me\
+            &url=https://github.com/${{ github.repository }}/releases/download/coverity-scan-${{ github.run_id }}/myproject.tar.bz2\
+            &version=1.0&description=Automated+Coverity+Scan"\
+            https://scan.coverity.com/builds
