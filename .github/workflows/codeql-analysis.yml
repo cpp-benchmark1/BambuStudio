@@ -60,9 +60,10 @@ jobs:
           sudo apt-get install -y autoconf libdbus-1-dev libwebkit2gtk-4.1-dev texinfo cmake clang git g++ build-essential libgl1-mesa-dev m4 libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules pkgconf libglu1-mesa-dev libcairo2-dev libgtk-3-dev libsoup2.4-dev libgstreamer1.0-dev libgstreamer-plugins-good1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-bad libosmesa6-dev nasm yasm libx264-dev freeglut3-dev
           mkdir -p ${{ github.workspace }}/BambuStudio_dep/usr/local; cd deps && mkdir build; cd build
           cmake ../ -DDESTDIR="${{ github.workspace }}/BambuStudio_dep" -DCMAKE_BUILD_TYPE=Release -DDEP_WX_GTK3=1
-          make
+          make -j 4
+          echo 'dependencies built'
           cd ../.. && mkdir install_dir; mkdir build; cd build
-          cmake .. -DSLIC3R_GTK=3 -DBBL_RELEASE_TO_PUBLIC=1 -DCMAKE_PREFIX_PATH="${{ github.workspace }}/BambuStudio_dep/usr/local" -DCMAKE_INSTALL_PREFIX="../install_dir" -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DSLIC3R_STATIC=ON -DSLIC3R_GTK=3 -DBBL_RELEASE_TO_PUBLIC=1 -DCMAKE_PREFIX_PATH="${{ github.workspace }}/BambuStudio_dep/usr/local" -DCMAKE_INSTALL_PREFIX="../install_dir" -DCMAKE_BUILD_TYPE=Releas
           CFLAGS="-Wno-dev" cmake --build . --target install --config Release
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
