@@ -59,6 +59,7 @@ jobs:
       run: |
           sudo apt-get install -y autoconf libdbus-1-dev libwebkit2gtk-4.1-dev texinfo cmake clang git g++ build-essential libgl1-mesa-dev m4 libwayland-dev libxkbcommon-dev wayland-protocols extra-cmake-modules pkgconf libglu1-mesa-dev libcairo2-dev libgtk-3-dev libsoup2.4-dev libgstreamer1.0-dev libgstreamer-plugins-good1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-bad libosmesa6-dev nasm yasm libx264-dev
           cd deps
+          mkdir -p ${{ github.GITHUB_PATH }}/BambuStudio_dep/usr/local
           mkdir build; cd build
           cmake ../ -DDESTDIR="${{ github.GITHUB_PATH }}/BambuStudio_dep" -DCMAKE_BUILD_TYPE=Release -DDEP_WX_GTK3=1
           make
