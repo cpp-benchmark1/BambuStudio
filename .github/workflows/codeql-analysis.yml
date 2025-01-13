@@ -64,7 +64,7 @@ jobs:
           echo 'dependencies built'
           cd ../.. && mkdir install_dir; mkdir build; cd build
           cmake .. -DSLIC3R_STATIC=ON -DSLIC3R_GTK=3 -DBBL_RELEASE_TO_PUBLIC=1 -DCMAKE_PREFIX_PATH="${{ github.workspace }}/BambuStudio_dep/usr/local" -DCMAKE_INSTALL_PREFIX="../install_dir" -DCMAKE_BUILD_TYPE=Releas
-          CFLAGS="-Wno-dev" cmake --build . --target install --config Release
+          CFLAGS="-Wno-dev" cmake --build . --target install --config Release -j 4
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
