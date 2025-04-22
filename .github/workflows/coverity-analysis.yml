@@ -47,7 +47,9 @@ jobs:
           echo 'dependencies built'
           cd ../.. && mkdir install_dir; mkdir build; cd build
           cmake .. -DSLIC3R_STATIC=ON -DSLIC3R_GTK=3 -DBBL_RELEASE_TO_PUBLIC=1 -DCMAKE_PREFIX_PATH="${{ github.workspace }}/BambuStudio_dep/usr/local" -DCMAKE_INSTALL_PREFIX="../install_dir" -DCMAKE_BUILD_TYPE=Release
-          coverity_tool/bin/cov-build --dir cov-int CFLAGS="-Wno-dev" cmake --build . --target install --config Release -j 4 || true
+          cd ..
+          coverity_tool/bin/cov-build --dir cov-int CFLAGS="-Wno-dev" cmake --build build --target install --config Release -j 4 || true
+          pwd && ls -la
       - name: Compress with bzip2
         run: |
           tar cjvf myproject.tar.bz2 cov-int
